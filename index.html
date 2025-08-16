@@ -1,0 +1,1347 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Life Science Flipbook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #b71c1c 0%, #880808 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Biology video background */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            object-fit: cover;
+            opacity: 0.3;
+        }
+
+        /* Biology-themed overlay */
+        .biology-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(183, 28, 28, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(136, 8, 8, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 82, 82, 0.2) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Floating biology elements */
+        .floating-dna {
+            position: fixed;
+            top: 10%;
+            right: 5%;
+            font-size: 3em;
+            opacity: 0.1;
+            animation: float 15s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        .floating-cell {
+            position: fixed;
+            bottom: 15%;
+            left: 8%;
+            font-size: 2.5em;
+            opacity: 0.08;
+            animation: float 12s ease-in-out infinite reverse;
+            z-index: -1;
+        }
+
+        .floating-microscope {
+            position: fixed;
+            top: 60%;
+            right: 15%;
+            font-size: 2em;
+            opacity: 0.06;
+            animation: float 18s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        .flipbook-container {
+            position: relative;
+            width: 98vw;
+            height: 96vh;
+            max-width: 1800px;
+            max-height: 1200px;
+            perspective: 2500px;
+        }
+
+        .book {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform-origin: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .page-spread {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .page-spread.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .page-spread.flipped {
+            transform: rotateY(-180deg);
+        }
+
+        .page {
+            position: relative;
+            width: 50%;
+            height: 100%;
+            background: white;
+            transform-origin: left center;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .page:hover {
+            transform: scale(1.02);
+        }
+
+        .page.right {
+            transform-origin: right center;
+            margin-left: auto;
+        }
+
+        .page-content {
+            width: 100%;
+            height: 100%;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+            background: white;
+            flex: 1;
+        }
+
+        /* Cover page container for two pages */
+.cover-page {
+    background: linear-gradient(135deg, #b71c1c, #880808);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 100vh;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    box-sizing: border-box;
+}
+
+.cover-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cover-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 200vh;
+    padding: 4em 2em;
+    box-sizing: border-box;
+}
+
+.cover-title, .cover-subtitle, .cover-author, .cover-date {
+    font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    color: #fffbe6;
+    text-shadow: 0 2px 8px #880808, 0 0px 2px #000;
+}
+
+.cover-title {
+    font-size: 3.2em;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-bottom: 0.7em;
+    color: #ffe082;
+    text-shadow: 0 4px 16px #880808, 0 0px 2px #000;
+}
+
+.cover-subtitle {
+    font-size: 2em;
+    font-weight: 700;
+    color: #fffc9c;
+    margin-bottom: 2em;
+    text-shadow: 0 2px 8px #b71c1c, 0 0px 2px #000;
+}
+
+.cover-author {
+    font-size: 1.3em;
+    color: #c9ffc7;
+    margin-bottom: 2em;
+    text-shadow: 0 2px 8px #880808, 0 0px 2px #000;
+}
+
+.cover-date {
+    font-size: 1.1em;
+    color: #fffbe6;
+    text-shadow: 0 2px 8px #880808, 0 0px 2px #000;
+}
+
+
+        /* Content page styling */
+        .content-page {
+            background-color: white;
+        }
+
+        .page-header {
+            text-align: center;
+            font-size: 1.2em;
+            color: #2d5a2d;
+            margin-bottom: 1em;
+            border-bottom: 2px solid #2d5a2d;
+            padding-bottom: 0.5em;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            font-size: 0.9em;
+            color: #666;
+            background: rgba(255,255,255,0.8);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+        }
+
+        .chapter-title {
+            font-size: 2em;
+            color: #2d5a2d;
+            margin-bottom: 1em;
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            color: #333;
+            margin: 1em 0 0.5em 0;
+            border-left: 4px solid #2d5a2d;
+            padding-left: 0.5em;
+        }
+
+        .content-space {
+            min-height: 200px;
+            border: 2px dashed #ccc;
+            margin: 1em 0;
+            padding: 1em;
+            background-color: #fafafa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-style: italic;
+            border-radius: 5px;
+        }
+
+        .content-space::before {
+            content: "Insert your content here";
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 150px;
+            border: 2px dashed #ccc;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1em 0;
+            color: #666;
+            font-style: italic;
+            border-radius: 5px;
+        }
+
+        .image-placeholder::before {
+            content: "Insert image here";
+        }
+
+        .highlight-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1em;
+            margin: 1em 0;
+            border-radius: 5px;
+        }
+
+        .key-points {
+            background-color: #fff3e0;
+            border: 1px solid #ff9800;
+            padding: 1em;
+            margin: 1em 0;
+            border-radius: 5px;
+        }
+
+        .key-points h4 {
+            color: #e65100;
+            margin-top: 0;
+        }
+
+        .index-item {
+            font-size: 1.1em;
+            margin: 0.5em 0;
+            padding: 0.3em 0;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .index-item:hover {
+            color: #2d5a2d;
+        }
+
+        .index-number {
+            font-weight: bold;
+            color: #2d5a2d;
+            margin-right: 1em;
+        }
+
+        /* Navigation Controls */
+        .controls {
+            position: absolute;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .control-btn {
+            background: rgba(45, 90, 45, 0.9);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .control-btn:hover {
+            background: rgba(45, 90, 45, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .control-btn:disabled {
+            background: rgba(128, 128, 128, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-indicator {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            color: #2d5a2d;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2d5a2d;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .flipbook-container {
+                width: 95vw;
+                height: 70vh;
+            }
+            
+            .cover-title {
+                font-size: 2em;
+            }
+            
+            .cover-subtitle {
+                font-size: 1.2em;
+            }
+            
+            .chapter-title {
+                font-size: 1.5em;
+            }
+            
+            .controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .control-btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+        }
+
+        /* Page turning animation */
+        .page.turning {
+            animation: pageTurn 0.8s ease-in-out;
+        }
+
+        @keyframes pageTurn {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(-90deg); }
+            100% { transform: rotateY(-180deg); }
+        }
+
+        /* Custom scrollbar */
+        .page-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .page-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .page-content::-webkit-scrollbar-thumb {
+            background: #2d5a2d;
+            border-radius: 3px;
+        }
+
+        .page-content::-webkit-scrollbar-thumb:hover {
+            background: #1a3d1a;
+        }
+
+        /* Interactive elements */
+        .interactive-button {
+            background: linear-gradient(45deg, #2d5a2d, #4a7c59);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin: 0.5em;
+        }
+
+        .interactive-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #1a3d1a, #2d5a2d);
+        }
+
+        .floating-element {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flipbook Background Video Section -->
+    <div id="flipbook-video-section">
+        <video class="video-background" autoplay muted loop playsinline>
+            <!-- Red/blood-themed background video (royalty-free sample) -->
+            <source src="21617-319452308.mp4" type="video/webm">
+        </video>
+    </div>
+    
+    <!-- Biology-themed overlay -->
+    <div class="biology-overlay"></div>
+    
+    <!-- Floating biology elements -->
+    <div class="floating-dna">🧬</div>
+    <div class="floating-cell">🔬</div>
+    <div class="floating-microscope">🔬</div>
+    
+    <!-- Loading Screen -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Flipbook Container -->
+    <div class="flipbook-container">
+        <div class="book" id="book">
+            <!-- Spread 1: Cover Page (fills both sides) -->
+            <div class="page-spread active" data-spread="1">
+                <div class="page cover-page" style="width:100%; height:100%; position:relative; overflow:hidden;">
+                    <!-- Cover video background -->
+                    <video autoplay muted loop playsinline style="
+                        position:absolute;
+                        top:0; left:0; width:100%; height:100%;
+                        object-fit:cover;
+                        z-index:0;
+                    ">
+                        <source src="4169-177682161 (1).mp4" type="video/mp4">
+                        <!-- Add other formats if needed -->
+                    </video>
+                    <div class="cover-content" style="position:relative; z-index:1;">
+                        <div class="cover-title">🧬 HUMAN CIRCULATORY SYSTEM 🧬</div>
+                        <div class="cover-subtitle">Life Sciences<BR>GRADE 10</div>
+                        
+                        <div class="cover-author">A Comprehensive Guide to the Study of Life</div>
+                        <div class="cover-date">2025</div>
+                        <div style="margin-top: 2em; font-size: 1.5em;">🔬 🌱 🧪</div>
+                        <div class="page-number"></div>
+                        <!-- Audio for cover page: use the same JS logic as authors page -->
+                        <script>
+                        // ...existing code...
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <!-- Spread 2: Authors & Index Page -->
+            <div class="page-spread" data-spread="2">
+                <!-- Left page: Authors -->
+                <div class="page" data-page="2">
+                    <div class="page-content content-page">
+                        <div class="page-header">Authors</div>
+                        <div class="chapter-title">Meet the Authors</div>
+                        <div style="display: flex; gap: 2em; justify-content: center; align-items: flex-start; margin-bottom: 2em;">
+                           <div style="flex:1; text-align:center;">
+    <img src="IMG_0757.jpg" alt="NICOLE Photo" style="height:150px; width:auto; border-radius:50%; margin-bottom:1.5em; object-fit:cover;">
+    <div style="font-weight:bold; margin-bottom:0.2em;">PROF. NICOLE FRISLEY</div>
+    <div style="font-size:0.95em; color:#555;">222083250</div>
+    <div style="font-size:0.95em; color:#555;">Contact Details: 0826190102/frisleynicole@gmail.com</div>
+</div>
+                                
+                            <div style="flex:1; text-align:center;">
+                                <img src="1.jpg" alt="NTOKOZO Photo" style="height:150px; width:auto; border-radius:50%; margin-bottom:1.5em; object-fit:cover;">
+    <div style="font-weight:bold; margin-bottom:0.2em;">PROF. NTOKOZO MHLONGO</div>
+    <div style="font-size:0.95em; color:#555;">222036310</div>
+    <div style="font-size:0.95em; color:#555;">Contact Details: 0834598296/gmhlongo@gmail.com</div>
+                            </div>
+                        </div>
+                        <div class="section-title">About This Ebook🔈🔉🔊</div>
+                        <div class="highlight-box">
+                            <p>
+                                This interactive Life Sciences ebook is designed for Grade 10 learners, focusing on the Human Circulatory System. 
+                                It provides clear explanations, engaging visuals, and interactive elements to help students understand key concepts in biology. 
+                                Explore chapters on blood flow, cardiac cycle, blood vessels, and more, with practical study tips and activities throughout.
+                            </p>
+                        </div>
+                        <div class="page-number">i</div>
+                    </div>
+                </div>
+                <!-- Right page: Index -->
+                <div class="page right" data-page="3">
+                    <div class="page-content content-page">
+                        <div class="page-header">Table of Contents</div>
+                        <div class="chapter-title">🧬 Circulatory System Index</div>
+                        <div class="section-title">Chapter Navigation</div>
+                        <div class="index-item" onclick="goToSpread(2)">
+                            <span class="index-number">1.</span>
+                            <span>THE HUMAN CURCULATORY SYSTEM</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 1</span>
+                        </div>
+                        <div class="index-item" onclick="goToSpread(2)">
+                            <span class="index-number">2.</span>
+                            <span>PULMONARY CIRCULATION</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 2</span>
+                        </div>
+                        <div class="index-item" onclick="goToSpread(3)">
+                            <span class="index-number">3.</span>
+                            <span>THE SYSTEMIC CIRCULATION</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 3</span>
+                        </div>
+                        <div class="index-item" onclick="goToSpread(3)">
+                            <span class="index-number">4.</span>
+                            <span>THE HEART</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 4</span>
+                        </div>
+                        <div class="index-item" onclick="goToSpread(4)">
+                            <span class="index-number">5.</span>
+                            <span>EXTERNAL STRUCTURE</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 5</span>
+                        </div>
+                        <div class="index-item" onclick="goToSpread(4)">
+                            <span class="index-number">6.</span>
+                            <span>INTERNAL STRUCTURE</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 6</span>
+                        </div>
+                        <div class="index-item" onclick="goToSpread(5)">
+                            <span class="index-number">7.</span>
+                            <span>CARDIAC CYCLE</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 7</span>
+                        </div>
+                         <div class="index-item" onclick="goToSpread(5)">
+                            <span class="index-number">8.</span>
+                            <span>TERMINOLOGY</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 8</span>
+                        </div>
+                         <div class="index-item" onclick="goToSpread(6)">
+                            <span class="index-number">9.</span>
+                            <span>CONCLUSION</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 9</span>
+                        </div>
+                         <div class="index-item" onclick="goToSpread(6)">
+                            <span class="index-number">10.</span>
+                            <span>FORMATIVE/SUMMATIVE ASSESSMENT</span>
+                            <span style="float:right; color:#888; font-size:0.95em;">p. 10</span>
+                        </div>
+                        <div class="page-number">ii</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Spread 3: Pages 4-5 (was previously spread 4) -->
+            <div class="page-spread" data-spread="3">
+                <div class="page" data-page="4">
+                    <div class="page-content content-page">
+                        <div class="page-header">THE HUMAN CIRCULATORY SYSTEM</div>
+                        <div class="chapter-title">Introduction</div>
+                        <div class="section-title"></div>
+                        <p>
+                             <div class="chapter-title" style="font-size:1.2em; color:#2d5a2d; margin-bottom:1em; text-align:left;">
+                            
+
+<!-- Embed code section starts here -->
+<div style="margin: 1.8em 0; background: #f3e5f5; padding: 1em; border-radius: 15px;">
+    <iframe src="https://app.lumi.education/api/v1/run/1Kv8yo/embed"
+        width="660" height="250" frameborder="0" allowfullscreen
+        allow="geolocation *; microphone *; camera *; midi *; encrypted-media *">
+    </iframe>
+    <script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+</div>
+                        </div>
+                        </p>
+                        <div class="highlight-box">
+                            <strong>It has three main parts:</strong>
+                            <ul>
+                                <li>The heart</li>
+                                <li>Blood vessels</li>
+                                <li>Blood</li>
+                                </div>
+                <p>
+                             <div class="chapter-title" style="font-size:1.2em; color:#2d5a2d; margin-bottom:1em; text-align:left;">
+                             The circulatory system is divided into pulmonary circulation (to and from the lungs) and
+systemic circulation (to and from the rest of the body).
+                        </div>
+<iframe src="https://app.lumi.education/api/v1/run/9X1A84/embed" width="690" height="500" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"></iframe>
+<script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+                        
+                        </p>
+                        <div class="page-number">1</div>
+                                     <!-- Add this inside the page-content for page 4 -->
+                    <!-- filepath: c:\Users\frisl\OneDrive\Desktop\LIFE SCIENCE EBOOK\LS EBOOK.html -->
+                    <div class="page-content content-page">
+                        <!-- ...existing content... -->
+                        <!-- Remove the glossary box here -->
+                        <!-- ...rest of your page 4 content... -->
+                    </div>   </div>
+                </div>
+                <div class="page right" data-page="5">
+                    <div class="page-content content-page">
+                        <div class="page-header">PULMONARY CIRCULATION</div>
+                        <div class="section-title"><b>How does blood flow between the heart and lungs during pulmonary circulation?</b></div>
+                        
+                        <!-- Space for embedded video -->
+                        <div style="margin: 1.5em 0;">
+                            <iframe src="https://app.lumi.education/api/v1/run/qTHcY1/embed" width="1088" height="720" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"></iframe>
+                            <script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+                        </div>
+                        
+                        <div class="section-title">Pulmonary circulation carries blood between your heart and lungs.</div>
+                        <ul>
+                            <li>Deoxygenated blood leaves the right ventricle via the pulmonary arteries.</li>
+                            <li>It travels to the lungs, where carbon dioxide is exchanged for oxygen.</li>
+                            <li>Oxygenated blood returns to the left atrium via the pulmonary veins.</li>
+                        </ul>
+                        </br></br>
+                         <p>
+                             <div class="chapter-title" style="font-size:1.2em; color:#2d5a2d; margin-bottom:1em; text-align:left;">
+                            This process ensures that oxygen is added to the blood before it is pumped to the rest
+of the body.
+                        </div>
+                        </p>
+                        
+                        <div class="page-number">2</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Spread 4: Pages 6-7 (was previously spread 5) -->
+            <div class="page-spread" data-spread="4">
+                <div class="page" data-page="2">
+                    <div class="page-content content-page">
+                        <div class="page-header">SYSTEMIC CIRCULATION</div>
+                        
+                        <div class="section-title">LEARNING OUTCOMES</div>
+                        <p>
+                            Describe how blood circulates between the heart and the rest of the body.
+                        </p>
+                        </br>
+
+                        <div class="highlight-box">
+                            <strong>Systemic circulation delivers oxygen-rich blood from the left ventricle to the entire body.</strong></br></br>
+                            <ol>
+                                <li>Blood leaves through the aorta.</li>
+                                <li>Arteries branch into capillaries, where oxygen is delivered to tissues and carbon
+dioxide is collected.</li>
+                                <li>Deoxygenated blood returns via veins to the right atrium.</li>
+                            </ol></br>
+                            <p><i> This cycle is continuous, keeping every cell supplied with nutrients and oxygen.</i></p>
+                        </div>
+                          <div class="chapter-title"> Branching Scenario</br>
+                            🩸“Follow the Blood Cell”🩸</div>
+                           <iframe src="https://app.lumi.education/api/v1/run/4ef85i/embed" width="1088" height="720" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *">
+
+                           </iframe><script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+                        <div class="page-number">3</div>
+                    </div>
+                  
+                </div>
+                <div class="page right" data-page="4">
+                    <div class="page-content content-page">
+                        <div class="page-header">THE HEART</div>
+                        <div class="section-title">LEARNING OUTCOMES</div>
+                        <p>
+                            Identify the heart’s role as a pump and recognise its position in the body.
+                        </p></BR>
+                         <div class="section-title">Content</div>
+                        <p>
+                            The heart is a hollow muscular organ about the size of your fist. It sits in the thoracic
+cavity between the lungs. 
+                        </p>
+                        <P>It is made up of four chambers:</P>
+                         <ol>
+                                <li>Two atria (upper chambers)</li>
+                                <li>Two ventricles (lower chambers)</li>
+                            </ol></br>
+                            <P>The heart contracts rhythmically, pumping blood through pulmonary and systemic
+circuits.</P>
+                        
+                        <div class="section-title">YOU GUYS STILL LOCKED IN?</div>
+                        <img src="Capture.PNG" alt="Photo" style="height:500px; width:auto; margin-bottom:1.5em; object-fit:cover;">
+                        <div class="page-number">4</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Spread 5: Pages 5-6 -->
+            <div class="page-spread" data-spread="5">
+    <div class="page" data-page="5">
+        <div class="page-content content-page">
+            <div class="page-header">EXTERNAL STRUCTURE</div>
+            <div class="section-title">LEARNING OUTCOMES</div>
+            <p>
+                Label and describe the external parts of the heart.
+            </p>
+            <div class="section-title">Content</div>
+            <p>
+                <div class="highlight-box">
+                    <strong>From the outside, you can see:</strong>
+                    <ul>
+                        <li>Aorta – the largest artery.</li>
+                        <li>Pulmonary arteries – carry blood to lungs.</li>
+                        <li>Pulmonary veins – carry blood from lungs.</li>
+                        <li>Superior and inferior vena cava – bring blood back from the body.</li>
+                    </ul>
+                </div>
+            </p>
+            <div class="chapter-title">🔍Label the Diagram</div>
+            <iframe src="https://app.lumi.education/api/v1/run/gSAiiv/embed" width="1088" height="720" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"></iframe>
+            <script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+            <div class="page-number">5</div>
+        </div>
+    </div>
+    <div class="page right" data-page="6">
+        <div class="page-content content-page">
+            <div class="page-header">INTERNAL STRUCTURE</div>
+            <div class="section-title">LEARNING OUTCOMES</div>
+            <p>
+                Describe and identify the internal features of the heart.
+            </p>
+            <div class="section-title">Content</div>
+            <div class="highlight-box">
+                <strong>Inside the heart:</strong>
+                <ul>
+                    <li>Septum – wall dividing left and right sides.</li>
+                    <li>Valves – control one-way flow (tricuspid, bicuspid/mitral, pulmonary, aortic).</li>
+                    <li>Chordae tendineae – “heart strings” supporting valves.</li>
+                </ul>
+            </div>
+            <div class="chapter-title">🎭Matching Game</div>
+            <iframe src="https://app.lumi.education/api/v1/run/5JwjKc/embed" width="1088" height="720" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"></iframe>
+            <script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+            <div class="page-number">6</div>
+        </div>
+    </div>
+</div>
+
+<!-- Spread 6: Pages 7-8 -->
+<div class="page-spread" data-spread="6">
+    <div class="page" data-page="7">
+        <div class="page-content content-page">
+            <div class="page-header">CARDIAC CYCLE</div>
+            <div class="section-title">LEARNING OUTCOMES</div>
+            <p>
+                Explain the sequence of events in one heartbeat.
+            </p>
+            <div class="section-title">Content</div>
+            <p>
+                The cardiac cycle moves blood through the heart.<br>
+                The heart distributes blood to all parts of the body through two sets of muscular actions, called contractions.<br>
+                The cardiac cycle involves:
+            </p>
+            <ul>
+                <li>systole – contraction of the heart muscle</li>
+                <li>diastole – relaxation of the heart muscle.</li>
+            </ul>
+            <p>
+                The heart beats twice:
+            </p>
+            <ul>
+                <li>Atrial systole forces blood through the heart into the ventricles</li>
+                <li>Ventricle systole forces blood out of the heart.</li>
+            </ul>
+            
+            <iframe src="https://app.lumi.education/api/v1/run/XhbqnP/embed" width="1088" height="720" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"></iframe>
+            <script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+    
+            <div class="page-number">7</div>
+        </div>
+    </div>
+    <div class="page right" data-page="8">
+        <div class="page-content content-page">
+            <div class="page-header">TERMINOLOGY</div>
+            <div class="section-title">TERMS USED IN EBOOK</div>
+            
+            <p>
+                <iframe src="https://app.lumi.education/api/v1/run/hPRq-i/embed" width="1088" height="720" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"></iframe>
+                <script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+            </p>
+            
+            
+            <div class="page-number">8</div>
+        </div>
+    </div>
+</div>
+
+<!-- Spread 7: Pages 9-10 -->
+<div class="page-spread" data-spread="7">
+    <div class="page" data-page="9">
+        <div class="page-content content-page">
+            <div class="page-header">CONCLUSION AND REFERENCE LIST</div>
+            <div class="section-title">PRESS PLAY TO LISTEN TO YOUR CONCLUSIVE PODCAST</div>
+             <!-- Murf audio embed for summary page -->
+        <div style="margin-bottom: 18px;">
+            <iframe class="murf-embed" width="360" height="102" src="https://murf.ai/embeds/index.html?embedId=meaj02qv" allowfullscreen title="Murf Embed Player" style="border: none;"></iframe>
+            <script src="https://murf.ai/embeds/widget.js"></script>
+        </div>
+        <div style="margin-bottom: 18px;">
+            <iframe src="https://app.lumi.education/api/v1/run/-kOVfy/embed" width="705" height="720" frameborder="0" allowfullscreen="allowfullscreen" allow="geolocation *; microphone *; camera *; midi *; encrypted-media *"></iframe>
+            <script src="https://app.Lumi.education/api/v1/h5p/core/js/h5p-resizer.js" charset="UTF-8"></script>
+        </div>
+        <div style="margin-top: 18px; margin-bottom: 18px;">
+            <iframe src="https://docs.google.com/document/d/e/2PACX-1vSBxj1m_Ywe-mVVdClFodsUvgKfvKYzrFibA5z4O3yuh6uPPxgM5kubawrbtO1rcFioopeZWnA8fBeG/pub?embedded=true" width="705" height="720" frameborder="0" style="border:none;"></iframe>
+        </div>
+        
+            <div class="page-number">9</div>
+        </div>
+    </div>
+    <div class="page right" data-page="10">
+        <div class="page-content content-page">
+            <div class="page-header">SUMMATIVE ASSESSMENT</div>
+            <div class="section-title">COMPLETE YOUR FORMATIVE ASSESSMENT BY CLICKING THE BUTTON BELOW:</div>
+           <a href="https://kahoot.it/challenge/04046703?challenge-id=2ec74bd7-838c-41f2-9668-e34d9f9d590f_1755263307751" target="_blank" style="display:inline-block; background-color:#FF4F4F; color:#FFFFFF; padding:12px 20px; 
+           text-decoration:none; border-radius:8px; font-size:18px; font-weight:600; font-family:Arial, sans-serif; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);"> Play the Kahoot Quiz </a>
+            <div class="section-title">COMPLETE YOUR SUMMATIVE ASSESSMENT BELOW:</div>
+            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSelwbSrW2wWV7lW3Uz5UGHJlr9647F-U1ni70hMI5I9kWywuA/viewform?embedded=true" width="640" height="1542" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+
+            <div class="page-number">10</div>
+        </div>
+    </div>
+</div>
+            <!-- Add more spreads as needed -->
+        </div>
+    </div>
+
+    <!-- AI Assistant Button and Modal -->
+    <button id="ai-assistant-btn" style="
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        z-index: 20000;
+        background: linear-gradient(45deg, #2d5a2d, #4a7c59);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 2em;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    ">👩‍💻</button>
+
+    <div id="ai-modal" style="
+        display: none;
+        position: fixed;
+        left: 0; top: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.4);
+        z-index: 20001;
+        align-items: center;
+        justify-content: center;
+    ">
+        <div style="
+            background: #fff;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90vw;
+            padding: 2em 1.5em 1.5em 1.5em;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+        ">
+            <button id="ai-modal-close" style="
+                position: absolute;
+                top: 10px; right: 15px;
+                background: none;
+                border: none;
+                font-size: 1.5em;
+                color: #2d5a2d;
+                cursor: pointer;
+            ">&times;</button>
+            <h3 style="margin:0 0 0.5em 0; color:#2d5a2d;">Ask the AI Assistant</h3>
+            <div style="font-size:0.95em; color:#444;">Ask any question about the flipbook content below:</div>
+            <textarea id="ai-question" rows="3" style="width:100%; border-radius:8px; border:1px solid #ccc; padding:0.5em; resize:vertical;"></textarea>
+            <button id="ai-send" style="
+                background: linear-gradient(45deg, #2d5a2d, #4a7c59);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0.7em 1.2em;
+                font-size: 1em;
+                cursor: pointer;
+                margin-top: 0.5em;
+            ">Ask</button>
+            <div id="ai-response" style="min-height:2em; color:#1a3d1a; margin-top:0.5em;"></div>
+        </div>
+    </div>
+
+    <!-- Add these notification containers just before your closing </body> tag -->
+<!-- filepath: c:\Users\frisl\OneDrive\Desktop\LIFE SCIENCE EBOOK\LIFE SCIENCE EBOOK.html -->
+<div id="notification-flip" style="
+    display:none;
+    position:fixed;
+    bottom:40px;
+    right:40px;
+    background:linear-gradient(45deg,#2d5a2d,#4a7c59);
+    color:#fff;
+    padding:18px 28px;
+    border-radius:12px;
+    font-size:1.15em;
+    box-shadow:0 4px 16px rgba(0,0,0,0.18);
+    z-index:9999;
+    pointer-events:none;
+    transition:opacity 0.3s;
+"></div>
+<div id="notification-scroll" style="
+    display:none;
+    position:fixed;
+    top:40px;
+    right:40px;
+    background:#fffde7;
+    color:#2d5a2d;
+    padding:14px 22px;
+    border-radius:10px;
+    font-size:1em;
+    box-shadow:0 2px 10px rgba(0,0,0,0.12);
+    z-index:9999;
+    pointer-events:none;
+    border-left:5px solid #ffd54f;
+    transition:opacity 0.3s;
+"></div>
+
+    <script>
+        // --- Flipbook Logic ---
+        let currentSpread = 1;
+        const totalSpreads = 7; // Update this to match your actual number of spreads
+        let spreads;
+
+        // Add flip page sound after every page flip
+// filepath: c:\Users\frisl\OneDrive\Desktop\LIFE SCIENCE EBOOK\ebook1.html
+
+// Add this near the top of your <script> block, after your variables:
+const flipSound = new Audio('page-flip-47177.mp3'); // Place page-flip.mp3 in your project folder
+
+function playFlipSound() {
+    flipSound.currentTime = 0;
+    flipSound.play();
+}
+
+
+// Authors page sound
+const authorsSound = new Audio('authors-page.mp3'); // Place authors-sound.mp3 in your project folder
+function playAuthorsSound() {
+    authorsSound.currentTime = 0;
+    authorsSound.play();
+}
+function stopAuthorsSound() {
+    authorsSound.pause();
+    authorsSound.currentTime = 0;
+}
+
+// Spread 3 onwards sound with play/pause button
+const continuousSound = new Audio('KM.mp3'); // Change to your desired file
+continuousSound.loop = true;
+let continuousSoundReady = false;
+let continuousSoundStarted = false;
+// Create play/pause button
+const soundBtn = document.createElement('button');
+soundBtn.textContent = '🔊 PRESS PLAY & LOCK IN';
+soundBtn.style.position = 'fixed';
+soundBtn.style.bottom = '30px';
+soundBtn.style.right = '30px';
+soundBtn.style.zIndex = '30000';
+soundBtn.style.background = 'linear-gradient(45deg, #2d5a2d, #4a7c59)';
+soundBtn.style.color = 'white';
+soundBtn.style.border = 'none';
+soundBtn.style.borderRadius = '25px';
+soundBtn.style.padding = '14px 28px';
+soundBtn.style.fontSize = '1.2em';
+soundBtn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+soundBtn.style.display = 'none';
+soundBtn.style.cursor = 'pointer';
+document.body.appendChild(soundBtn);
+
+function unlockContinuousSound() {
+    if (!continuousSoundReady) {
+        continuousSound.play().then(() => {
+            continuousSound.pause();
+            continuousSound.currentTime = 0;
+            continuousSoundReady = true;
+        }).catch(() => {});
+    }
+}
+window.addEventListener('click', unlockContinuousSound, { once: true });
+window.addEventListener('keydown', unlockContinuousSound, { once: true });
+
+function showSoundBtnIfNeeded() {
+    if (typeof currentSpread !== 'undefined' && currentSpread >= 3) {
+        soundBtn.style.display = 'block';
+    } else {
+        soundBtn.style.display = 'none';
+    }
+}
+
+soundBtn.addEventListener('click', function() {
+    if (!continuousSoundReady) return;
+    if (continuousSound.paused) {
+        continuousSound.currentTime = 0;
+        continuousSound.play();
+        soundBtn.textContent = '⏸️ Pause Sound';
+    } else {
+        continuousSound.pause();
+        soundBtn.textContent = '🔊 Play Sound';
+    }
+});
+
+// Patch updateSpreadDisplay to show/hide button from spread 3 onwards
+const originalUpdateSpreadDisplayContinuous = updateSpreadDisplay;
+updateSpreadDisplay = function() {
+    originalUpdateSpreadDisplayContinuous();
+    showSoundBtnIfNeeded();
+};
+
+const ebookContent = [
+    {
+        title: "THE HUMAN CIRCULATORY SYSTEM",
+        page: 4,
+        summary: "Introduction to the circulatory system, its main parts, and functions."
+    },
+    {
+        title: "PULMONARY CIRCULATION",
+        page: 5,
+        summary: "Explains how blood flows between the heart and lungs."
+    },
+    {
+        title: "SYSTEMIC CIRCULATION",
+        page: 6,
+        summary: "Describes how blood circulates between the heart and the rest of the body."
+    },
+    {
+        title: "THE HEART",
+        page: 7,
+        summary: "Details the heart’s role as a pump and its position in the body."
+    },
+    {
+        title: "EXTERNAL STRUCTURE",
+        page: 8,
+        summary: "Labels and describes the external parts of the heart."
+    },
+    {
+        title: "CARDIAC CYCLE",
+        page: 10,
+        summary: "Explains the sequence of events in one heartbeat."
+    },
+    {
+        title: "SUMMARY OF EBOOK",
+        page: 11,
+        summary: "Summarizes the key points of the ebook."
+    },
+    {
+        title: "CONCLUSION",
+        page: 12,
+        summary: "Concludes the ebook."
+    },
+    {
+        title: "REVIEW & QUIZ",
+        page: 13,
+        summary: "Provides a quick quiz for review."
+    }
+];
+
+        window.addEventListener('DOMContentLoaded', function() {
+            spreads = document.querySelectorAll('.page-spread');
+            setTimeout(initFlipbook, 500);
+
+            // Add smooth scrolling to content areas
+            document.querySelectorAll('.page-content').forEach(container => {
+                container.addEventListener('wheel', function(e) {
+                    e.stopPropagation();
+                });
+            });
+
+            // AI Assistant logic
+            const aiBtn = document.getElementById('ai-assistant-btn');
+            const aiModal = document.getElementById('ai-modal');
+            const aiClose = document.getElementById('ai-modal-close');
+            const aiSend = document.getElementById('ai-send');
+            const aiQuestion = document.getElementById('ai-question');
+            const aiResponse = document.getElementById('ai-response');
+
+            aiBtn.onclick = () => {
+                aiModal.style.display = 'flex';
+                aiResponse.textContent = '';
+                aiQuestion.value = '';
+                aiQuestion.focus();
+            };
+            aiClose.onclick = () => aiModal.style.display = 'none';
+            aiModal.onclick = (e) => {
+                if (e.target === aiModal) aiModal.style.display = 'none';
+            };
+
+            aiSend.onclick = () => {
+                const question = aiQuestion.value.trim();
+                if (!question) {
+                    aiResponse.textContent = "Please enter a question.";
+                    return;
+                }
+                aiResponse.textContent = "Thinking...";
+                aiResponse.textContent = "I'm your AI assistant! While I can't answer real questions here, you can ask about any topic covered in this flipbook, such as biology chapters, key concepts, or navigation tips.";
+            };
+
+            // ...existing code...
+        });
+
+        function initFlipbook() {
+            updateSpreadDisplay();
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function updateSpreadDisplay() {
+            // Show/hide spreads
+            spreads.forEach((spread, index) => {
+                const spreadNum = parseInt(spread.dataset.spread);
+                if (spreadNum === currentSpread) {
+                    spread.classList.add('active');
+                    spread.classList.remove('flipped');
+                } else {
+                    spread.classList.remove('active');
+                    if (spreadNum < currentSpread) {
+                        spread.classList.add('flipped');
+                    } else {
+                        spread.classList.remove('flipped');
+                    }
+                }
+            });
+        }
+
+        function goToSpread(spreadNum) {
+            if (spreadNum >= 1 && spreadNum <= totalSpreads) {
+                // Stop authors sound if leaving authors page
+                if (currentSpread === 2 && spreadNum !== 2) {
+                    stopAuthorsSound();
+                }
+
+                currentSpread = spreadNum;
+                updateSpreadDisplay();
+
+                // Add turning animation to both pages in the spread
+                const currentSpreadElement = document.querySelector(`[data-spread="${spreadNum}"]`);
+                if (currentSpreadElement) {
+                    const pages = currentSpreadElement.querySelectorAll('.page');
+                    pages.forEach(page => {
+                        page.classList.add('turning');
+                        setTimeout(() => {
+                            page.classList.remove('turning');
+                            // Play authors sound ONLY if authors page is now visible
+                            if (spreadNum === 2) {
+                                playAuthorsSound();
+                            }
+                        }, 800);
+                    });
+                }
+
+                // Play flip sound
+                playFlipSound();
+            }
+        }
+
+        function nextPage() {
+            if (currentSpread < totalSpreads) {
+                goToSpread(currentSpread + 1);
+            }
+        }
+
+        function previousPage() {
+            if (currentSpread > 1) {
+                goToSpread(currentSpread - 1);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextPage();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousPage();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    goToSpread(1);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    goToSpread(totalSpreads);
+                    break;
+            }
+        });
+
+        // Click navigation on spreads
+        document.addEventListener('click', function(e) {
+    const spread = e.target.closest('.page-spread');
+    if (spread && !e.target.closest('.control-btn')) {
+        const rect = spread.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const width = rect.width;
+
+        // Determine which side was clicked
+        if (x > width / 2) {
+            // Right side clicked: animate right page
+            const rightPage = spread.querySelector('.page.right');
+            if (rightPage) {
+                rightPage.classList.add('turning');
+                setTimeout(() => {
+                    rightPage.classList.remove('turning');
+                    nextPage();
+                }, 800);
+            } else {
+                nextPage();
+            }
+        } else {
+            // Left side clicked: animate left page
+            const leftPage = spread.querySelector('.page:not(.right)');
+            if (leftPage) {
+                leftPage.classList.add('turning');
+                setTimeout(() => {
+                    leftPage.classList.remove('turning');
+                    previousPage();
+                }, 800);
+            } else {
+                previousPage();
+            }
+        }
+
+        // Play flip sound
+        playFlipSound();
+    }
+});
+    </script>
+</body>
+</html>
